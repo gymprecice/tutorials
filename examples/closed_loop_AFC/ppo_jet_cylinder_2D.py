@@ -1,10 +1,16 @@
+import sys
+import os
+sys.path.append(os.getcwd())
+
 import gymnasium as gym
 from gymnasium.vector.async_vector_env import AsyncVectorEnv
 
 from gymprecice.utils.constants import EPSILON, LOG_EPSILON
-from gymprecice.envs.openfoam.jet_cylinder_2d.environment import JetCylinder2DEnv
-from gymprecice.envs.openfoam.jet_cylinder_2d import environment_config
 from gymprecice.utils.multienvutils import worker_with_lock
+
+from envs.openfoam.jet_cylinder_2d.environment import JetCylinder2DEnv
+from envs.openfoam.jet_cylinder_2d import environment_config
+
 
 import torch
 import torch.nn as nn
