@@ -7,8 +7,8 @@ import math
 from scipy import signal
 import logging
 
-from envs.openfoam.utils import get_interface_patches, get_patch_geometry
-from envs.openfoam.utils import read_line
+from gymprecice.utils.openfoamutils import get_interface_patches, get_patch_geometry
+from gymprecice.utils.openfoamutils import read_line
 from gymprecice.utils.fileutils import open_file
 
 logger = logging.getLogger(__name__)

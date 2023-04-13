@@ -1,30 +1,37 @@
+### a work-around to find teh parent package (gymprecice-tutorials) without any installation setup
+import sys
+from os import getcwd
+sys.path.append(getcwd())
+###
+
 import pytest
 from pytest_mock import mocker, class_mocker
 
-import os
 from shutil import rmtree
+from os import chdir, path, makedirs, system
+
 import numpy as np
 import math
 
-from tests.envs import mocked_core
-from tests.envs import mocked_precice
+from . import mocked_core
+from . import mocked_precice
 
 
 @pytest.fixture
 def testdir(tmpdir):
-    test_env_dir = tmpdir.mkdir("test-jet-cylinder-env")
-    yield os.chdir(test_env_dir)
-    rmtree(test_env_dir)
+    test_dir = tmpdir.mkdir("test-jet-cylinder")
+    yield chdir(test_dir)
+    rmtree(test_dir)
 
 
 @pytest.fixture
 def patch_env_helpers(mocker):
     mocker.patch(
-        "envs.openfoam.jet_cylinder_2d.environment.get_interface_patches",
+        "closed_loop_AFC.jet_control_cylinder.environment.get_interface_patches",
         return_value=[],
     )
     mocker.patch(
-        "envs.openfoam.jet_cylinder_2d.environment.get_patch_geometry",
+        "closed_loop_AFC.jet_control_cylinder.environment.get_patch_geometry",
         return_value={},
     )
 
@@ -56,24 +63,35 @@ def mock_precice(class_mocker):
     class_mocker.patch.dict("sys.modules", {"precice": mocked_precice})
 
 
-class TestJetCylinder2D:
-    def make_env(
-        self,
-    ):  # a wrapper to prevent 'real precice' from being added to 'sys.module'
-        from envs.openfoam.jet_cylinder_2d.environment import (
-            JetCylinder2DEnv,
-        )
-        from envs.openfoam.jet_cylinder_2d import environment_config
+ENVIRONMENT_CONFIG = {
+    "environment": {
+        "name": "rotating_cylinder_2d"
+    },
+    "solvers": {
+        "name": ["fluid-openfoam"],
+        "reset_script": "clean.sh",
+        "run_script": "run.sh"
+    },
+    "actuators": {
+        "name": ["cylinder"]
+    }
+}
 
+
+class TestJetCylinder2D:
+    gymprecice_tutorials_dir = getcwd()
+    def make_env(self):
+        from closed_loop_AFC.jet_control_cylinder.environment import JetCylinder2DEnv
         JetCylinder2DEnv.__bases__ = (mocked_core.Adapter,)
 
-        return JetCylinder2DEnv(environment_config)
+        return JetCylinder2DEnv(ENVIRONMENT_CONFIG)
 
     def test_base(self, testdir, mock_precice):
-        from envs.openfoam.jet_cylinder_2d.environment import (
-            JetCylinder2DEnv,
-        )
+        from closed_loop_AFC.jet_control_cylinder.environment import JetCylinder2DEnv
+        assert JetCylinder2DEnv.__base__.__name__ == mocked_core.Adapter.__name__
 
+    def test_base(self, testdir, mock_precice):
+        from closed_loop_AFC.jet_control_cylinder.environment import JetCylinder2DEnv
         assert JetCylinder2DEnv.__base__.__name__ == mocked_core.Adapter.__name__
 
     def test_setters(self, testdir, patch_env_helpers, mock_adapter):
@@ -144,21 +162,21 @@ class TestJetCylinder2D:
         latest_available_sim_time = 0.335
         n_probes = 5
 
-        path_to_probes_dir = os.path.join(
-            os.getcwd(), f"postProcessing/probes/{latest_available_sim_time}/"
+        path_to_probes_dir = path.join(
+            getcwd(), f"postProcessing/probes/{latest_available_sim_time}/"
         )
-        os.makedirs(path_to_probes_dir)
+        makedirs(path_to_probes_dir)
 
         input = """# Time       p0      p1      p2      p3      p4 
             0.335       1.0     2.0     3.0     4.0     5.0     
         """
-        with open(os.path.join(path_to_probes_dir, "p"), "w") as file:
+        with open(path.join(path_to_probes_dir, "p"), "w") as file:
             file.write(input)
 
         env = self.make_env()
         env.n_probes = n_probes
         env.latest_available_sim_time = latest_available_sim_time
-        env._openfoam_solver_path = os.getcwd()
+        env._openfoam_solver_path = getcwd()
 
         expected = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
         output = env._probes_to_observation()
@@ -166,20 +184,18 @@ class TestJetCylinder2D:
         assert np.array_equal(output, expected)
 
     def test_get_action(self, testdir, mock_adapter, mocker):
-        from envs.openfoam.jet_cylinder_2d import environment_config
-
         mocker.patch(
-            "envs.openfoam.jet_cylinder_2d.environment.get_interface_patches",
+            "closed_loop_AFC.jet_control_cylinder.environment.get_interface_patches",
             return_value=["jet1", "jet2"],
         )
 
-        env_source_path = environment_config["environment"]["src"]
-        solver_names = environment_config["solvers"]["name"]
-        solver_dir = [os.path.join(env_source_path, solver) for solver in solver_names][
-            0
-        ]
-        os.makedirs(f"{os.getcwd()}/{solver_names[0]}/constant")
-        os.system(f"cp -r {solver_dir}/constant {os.getcwd()}/{solver_names[0]}")
+        sim_engine = path.join(TestJetCylinder2D.gymprecice_tutorials_dir,
+                               "closed_loop_AFC/jet_control_cylinder/physics-simulation-engine")
+        solver_names = ENVIRONMENT_CONFIG["solvers"]["name"]
+        solver_dir = [path.join(sim_engine, solver) for solver in solver_names][0]
+        print(solver_dir)
+        makedirs(f"{getcwd()}/{solver_names[0]}/constant", exist_ok=True)
+        system(f"cp -r {solver_dir}/constant {getcwd()}/{solver_names[0]}")
 
         input = np.array([-1.0, 1.0])
 
@@ -194,29 +210,29 @@ class TestJetCylinder2D:
         reward_average_time_window = 1
         n_forces = 3
 
-        path_to_forces_dir_0 = os.path.join(
-            os.getcwd(), f"postProcessing/forceCoeffs/0/"
+        path_to_forces_dir_0 = path.join(
+            getcwd(), f"postProcessing/forceCoeffs/0/"
         )
-        os.makedirs(path_to_forces_dir_0)
+        makedirs(path_to_forces_dir_0)
 
-        path_to_forces_dir_1 = os.path.join(
-            os.getcwd(), f"postProcessing/forceCoeffs/{latest_available_sim_time}/"
+        path_to_forces_dir_1 = path.join(
+            getcwd(), f"postProcessing/forceCoeffs/{latest_available_sim_time}/"
         )
-        os.makedirs(path_to_forces_dir_1)
+        makedirs(path_to_forces_dir_1)
 
         input = """# Time    Cd   Cs   Cl 
             0.335  1.0  0    2.0     
         """
-        with open(os.path.join(path_to_forces_dir_0, "coefficient.dat"), "w") as file:
+        with open(path.join(path_to_forces_dir_0, "coefficient.dat"), "w") as file:
             file.write(input)
-        with open(os.path.join(path_to_forces_dir_1, "coefficient.dat"), "w") as file:
+        with open(path.join(path_to_forces_dir_1, "coefficient.dat"), "w") as file:
             file.write(input)
 
         env = self.make_env()
         env.n_forces = n_forces
         env.latest_available_sim_time = latest_available_sim_time
         env.reward_average_time_window = reward_average_time_window
-        env._openfoam_solver_path = os.getcwd()
+        env._openfoam_solver_path = getcwd()
 
         expected = 3.205 - 1 - 0.2 * 2
         output = env._forces_to_reward()

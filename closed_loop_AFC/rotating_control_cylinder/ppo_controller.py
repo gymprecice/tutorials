@@ -1,19 +1,11 @@
-import sys
-import os
-sys.path.append(os.getcwd())
+from environment import RotatingCylinder2DEnv
 
 import gymnasium as gym
 from gymnasium.vector.async_vector_env import AsyncVectorEnv
 
 from gymprecice.utils.constants import EPSILON, LOG_EPSILON
 from gymprecice.utils.multienvutils import worker_with_lock
-
-from envs.openfoam.rotating_cylinder_2d.environment import (
-    RotatingCylinder2DEnv,
-)
-from envs.openfoam.rotating_cylinder_2d import environment_config
-
-#from envs.openfoam.rotating_cylinder_2d.environment import RotatingCylinder2DEnv 
+from gymprecice.utils.fileutils import make_result_dir
 
 import torch
 import torch.nn as nn
@@ -354,6 +346,7 @@ def parse_args():
 
 
 if __name__ == "__main__":
+    environment_config = make_result_dir()
     args = parse_args()
     # weigh and biases
     wandb_recorder = None

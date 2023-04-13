@@ -35,7 +35,7 @@
       <write-data name="Velocity" mesh="Controller-Mesh" />
     </participant>
 
-    <m2n:sockets from="Controller" to="Fluid" exchange-directory />
+    <m2n:sockets from="Controller" to="Fluid" exchange-directory="/data/ms2137/works/gymprecice_test/gymprecice-tutorials/closed_loop_AFC/jet_control_cylinder_2d/gymprecice-run/jet_cylinder_2d_controller_training_12042023_223129/precice-exchange-directory-0"  />
 
     <coupling-scheme:parallel-explicit>
       <max-time value="2.0" />
