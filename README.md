@@ -5,7 +5,7 @@
 This repository contains ready-to-run tutorial cases for the Gym-preCICE adapter. These tutorials can be used as a foundation for creating similar control cases.
 
 To define new control cases, you need to follow a simple file structure with three key components:
-```bash
+```
 new-control-problem
 ├── <controller-script-name>.py
 ├── envrionment.py
@@ -22,7 +22,7 @@ new-control-problem
 - `<controller-script-name>.py`: is a Python script defining the controller algorithm that interacts with the environment. This may, for instance, be the Proximal Policy Optimisation (PPO) algorithm, the Soft-Actor-Critic (SAC) algorithm, or a simple sinusoidal signal control.
 
 To run the control case, you need to switch to the root directory of the control case, here, `new-control-problem`, and run
- ```bash
+ ```
  python3 -u <controller-script-name>.py
  ```
 By default, the output will be saved in a directory called `gymprecice-run` that is located in the root directory of the control case. However, it is possible to specify a different path for the result directory via `gymprecice-config.json` file.
