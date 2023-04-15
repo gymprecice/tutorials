@@ -11,8 +11,6 @@ set -e
     cleanAuxiliary
     cleanDynamicCode
     cleanOptimisation
-    #cleanPostProcessing
-    #cleanTimeDirectories
     rm -f log.*
     rm -rf ./preCICE-output/
     rm -rf ./preCICE-*/

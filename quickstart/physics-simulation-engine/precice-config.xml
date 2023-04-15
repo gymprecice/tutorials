@@ -2,7 +2,7 @@
 <precice-configuration>
   <log>
     <sink
-      filter="%Severity% > debug and %Rank% = 0"
+      filter="%Severity% > info and %Rank% = 0"
       format="---[precice] %ColorizedSeverity% %Message%"
       enabled="true" />
   </log>
@@ -38,8 +38,8 @@
     <m2n:sockets from="Controller" to="Fluid" exchange-directory="/data/ms2137/works/gymprecice_test/gymprecice-tutorials/closed_loop_AFC/jet_control_cylinder_2d/gymprecice-run/jet_cylinder_2d_controller_training_12042023_223129/precice-exchange-directory-0"  />
 
     <coupling-scheme:parallel-explicit>
-      <max-time value="5.0" />
-      <time-window-size value="0.0005" valid-digits="8" />
+      <max-time value="8.0" />
+      <time-window-size value="0.0025" valid-digits="8" />
       <participants first="Controller" second="Fluid"/>
       <exchange data="Velocity" mesh="Controller-Mesh" from="Controller" to="Fluid" initialize="False"/>
     </coupling-scheme:parallel-explicit>

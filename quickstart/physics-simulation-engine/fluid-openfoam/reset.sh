@@ -10,11 +10,8 @@ set -e
     cleanAuxiliary
     cleanDynamicCode
     cleanOptimisation
-    # cleanPostProcessing
-    # cleanTimeDirectories
     rm -rf ./preCICE-output/
     rm -rf ./preCICE-*/
     rm -rf  ./postProcessing/*/*[1-9]*
     rm -f log.*
-    #decomposePar -force
 )
