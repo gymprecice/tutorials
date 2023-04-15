@@ -29,5 +29,6 @@ wandb/
 *.pickle
 *.csv
 *.ipynb
+!quickstart.ipynb
 RL_*/
 build/

@@ -1,12 +1,8 @@
 import gymnasium as gym
-
 from gymprecice.utils.fileutils import make_result_dir
-
 from environment import JetCylinder2DEnv
-
 import torch
 import torch.nn as nn
-
 import numpy as np
 from os import path, getcwd, system
 
@@ -36,13 +32,13 @@ if __name__ == "__main__":
     current_path = getcwd()
 
     # make the environment
-    environment_config = make_result_dir()
+    environment_config = make_result_dir(time_stamped=False, suffix="ppo")
     env = JetCylinder2DEnv(environment_config, 0)
     assert isinstance(
         env.action_space, gym.spaces.Box
     ), "only continuous action space is supported"
     env.latest_available_sim_time = 0
-    env.action_interval = 10
+    env.action_interval = 25
     terminated = False
 
     # create the controller and load it with a pre-trained network
@@ -54,15 +50,19 @@ if __name__ == "__main__":
     # reset the environment
     obs, info = env.reset()
 
+    
+    print("\n...")
+    print("The control case is running!")
+    print("This task is expected to be completed in about 5 minutes on a system with two cores @ 2.10GHz.")
+    print("...\n")
+
     # step through the environment and control it for one complete episode (8 seconds, 320 steps)
-    step_counter = 0
     while not terminated:
         with torch.no_grad():
             action = controller.act(obs)
         obs, _, terminated, _, _ = env.step(action)
-
-        step_counter += 1
-        print(f"Step: {step_counter}")
-
+    
+    print("The control case is done.")
+    
     # close the environment
     env.close()
