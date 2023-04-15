@@ -37,7 +37,7 @@ To make sure you can successfully run the tutorials, you need to install some ex
 
 - The tutorials within `open-loop` directory, in addition to OpenFOAM CFD solvers and OpenFOAM-preCICE adapter, rely on `deal.II` solid solvers and `deal.II-preCICE adapter`. Please follow the insructions [here](https://precice.org/adapter-dealii-overview.html) to install these dependencies.
 
-Please check out the [Quickstart](https://github.com/gymprecice/gymprecice-tutorials/quickstart) to follow running a control case step by step.
+Please check out the [Quickstart](https://github.com/gymprecice/gymprecice-tutorials/blob/master/quickstart/quickstart.ipynb) to follow running a control case step by step.
 ## Contributions
 gymprecice-tutorials is currently developed and maintained by: 
 
