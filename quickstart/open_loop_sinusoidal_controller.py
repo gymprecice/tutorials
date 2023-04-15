@@ -5,11 +5,8 @@ from gymprecice.utils.fileutils import make_result_dir
 from environment import JetCylinder2DEnv
 
 import torch
-import torch.nn as nn
 
-import numpy as np
 import math
-from os import path, getcwd, system
 
 
 class Controller:
@@ -20,22 +17,21 @@ class Controller:
         self.action_bias = (env.action_space.high + env.action_space.low) / 2.0
 
     def act(self):
-        unscaled_action = math.sin(20 * math.pi * self._t)
+        unscaled_action = math.sin(4 * math.pi * self._t)
         action = unscaled_action * self.action_scale + self.action_bias
         self._t += self._dt
         return action
 
 
 if __name__ == "__main__":
-    current_path = getcwd()
-   
     # make the environment
     environment_config = make_result_dir()
     env = JetCylinder2DEnv(environment_config, 0)
     assert isinstance(
         env.action_space, gym.spaces.Box
     ), "only continuous action space is supported"
-    env = gym.wrappers.ClipAction(env)
+    env.latest_available_sim_time = 0
+    env.action_interval = 10
     terminated = False
 
     # create the sinusoidal controller
@@ -44,11 +40,15 @@ if __name__ == "__main__":
     # reset the environment
     _, _ = env.reset()
 
-    # step through the environment and control it for one complete episode
+    step_counter = 0
+    # step through the environment and control it for one complete episode (8 seconds, 320 steps)
     while not terminated:
         with torch.no_grad():
             action = controller.act()
         _, _, terminated, _, _ = env.step(action)
+
+        step_counter += 1
+        print(f"Step: {step_counter}")
 
     # close the environment
     env.close()
