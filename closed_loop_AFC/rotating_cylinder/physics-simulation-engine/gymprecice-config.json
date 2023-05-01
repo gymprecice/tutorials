@@ -1,0 +1,14 @@
+{
+    "environment": {
+        "name": "rotating_cylinder"
+    },
+    "physics_simulation_engine": {
+        "solvers": ["fluid-openfoam"],
+        "reset_script": "reset.sh",
+        "run_script": "run.sh"
+    },
+    "controller": {
+        "read_from": {},
+        "write_to": {"cylinder": "Velocity"}
+    }
+}

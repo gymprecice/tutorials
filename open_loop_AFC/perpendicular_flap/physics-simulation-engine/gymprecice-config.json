@@ -1,0 +1,15 @@
+{
+    "environment": {
+        "name": "perpendicular_flap"
+    },
+    "physics_simulation_engine": {
+        "solvers": ["fluid-openfoam", "solid-dealii"
+        ],
+        "reset_script": "reset.sh",
+        "run_script": "run.sh"
+    },
+    "controller": {
+        "read_from": {"flap": "Force"},
+        "write_to": {"inlet": "Velocity"}
+    }
+}
