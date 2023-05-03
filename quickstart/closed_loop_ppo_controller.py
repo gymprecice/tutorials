@@ -52,7 +52,7 @@ if __name__ == "__main__":
     obs, info = env.reset()
 
     print("\n...")
-    print("The control case is running!")
+    print("The PPO control case is running!")
     print(
         "This task is expected to be completed in about 5 minutes on a system with two cores @ 2.10GHz."
     )

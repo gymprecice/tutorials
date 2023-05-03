@@ -2,7 +2,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ## Gym-preCICE Tutorials
 
-This repository contains ready-to-run tutorial cases serve as for the Gym-preCICE adapter. These tutorials can be used as a foundation for creating similar control cases.
+This repository contains ready-to-run tutorial cases that use the Gym-preCICE adapter. These tutorials can be used as a foundation for creating similar control cases.
 
 To define new control cases, you need to follow a simple file structure with three key components:
 ```

@@ -1,14 +1,18 @@
 {
     "environment": {
-        "name": "jet_cylinder_2d"
+        "name": "jet_cylinder"
     },
-    "solvers": {
-        "name": ["fluid-openfoam"],
+    "physics_simulation_engine": {
+        "solvers": ["fluid-openfoam"],
         "prerun_script": "prerun.sh",
         "reset_script": "reset.sh",
         "run_script": "run.sh"
     },
-    "actuators": {
-        "name": ["jet1", "jet2"]
+    "controller": {
+        "read_from": {},
+        "write_to": {
+            "jet1": "Velocity",
+            "jet2": "Velocity"
+        }
     }
 }

@@ -1,3 +1,4 @@
+"""AFC environment for jet cylinder control."""
 import logging
 import math
 from os.path import join
@@ -18,13 +19,50 @@ logger.setLevel(level=logging.INFO)
 
 
 class JetCylinder2DEnv(Adapter):
-    def __init__(self, options, idx=0) -> None:
+    r"""An AFC environment for jet cylinder control.
+
+    ## Description
+    This environment corresponds to the DRL-based control case described by Rabault, Jean, et al. in
+    ["Artificial neural networks trained through deep reinforcement learning discover control strategies for active flow control"](https://doi.org/10.1017/jfm.2019.62).
+    We control flow rate of a synthetic jet attached to the poles of a rigid cylinder immersed in a two-dimensional incompressible channel flow.
+    The goal is to reduce drag forces acting on the cylinder.
+
+    ## Action Space
+    The action is a `ndarray` with shape `(1,)` which can take values in the range of `[-2.5e-4, 2.5e-4]` with the value corresponding to
+    the control flow rate of the synthetic jet.
+    **Note**: Each control action (flow rate of the synthetic jet) is smoothly and linearly distributed over `self.action_interval` simulation time steps.
+
+    ## Observation Space
+    The observation is a `ndarray` with shape `(151,)` which can take values in the range of `[-Inf, Inf]` with the values corresponding to
+    pressure sensor probes allocated within the flow filed.
+
+    ## Rewards
+    Since the goal is to keep the drag forces acting on the cylinder as minimum as possible, a reward is defined based on the following relation:
+    reward = <Cd> - 0.2 * |<Cl>|, where <Cd> and <Cl> are respectively drag and lift coefficients of the cylinder averaged over the latest 0.335 s simulation time.
+    including the termination step, is allotted. The threshold for rewards is 500 for v1 and 200 for v0.
+
+    ## Episode End
+    The episode ends after two seconds of flow field simulation.
+
+    Args:
+        Adapter: gymprecice adapter super-class
+    """
+
+    def __init__(self, options: dict = None, idx: int = 0) -> None:
+        """Environment constructor.
+
+        Args:
+            options: a dictionary containing the information within gymprecice-config.json. It is a return of `gymprecice.utils.fileutils.make_result_dir` method called within the controller algorithm.
+            idx: environment index.
+        """
         super().__init__(options, idx)
 
         self.cylinder_origin = np.array([0, 0, 0.0223788])
         self.cylinder_radius = 0.05
-        self.jet_angle = [90, 270]
-        self.jet_width = [10, 10]
+        jet_angle = [90, 270]
+        jet_width = [10, 10]
+        self.theta0 = [np.radians(x) for x in jet_angle]
+        self.w = [np.radians(x) for x in jet_width]
 
         self._min_jet_rate = -2.5e-4
         self._max_jet_rate = 2.5e-4
@@ -73,35 +111,58 @@ class JetCylinder2DEnv(Adapter):
         for solver_name in self._solver_list:
             if solver_name.rpartition("-")[-1].lower() == "openfoam":
                 openfoam_case_name = solver_name
-                break
-
         self._openfoam_solver_path = join(self._env_path, openfoam_case_name)
-        interface_patches = get_interface_patches(
+
+        openfoam_interface_patches = get_interface_patches(
             join(openfoam_case_name, "system", "preciceDict")
         )
-        actuators = []
-        for patch in interface_patches:
-            if patch in self._actuator_list:
-                actuators.append(patch)
 
-        self.actuator_geometric_data = get_patch_geometry(openfoam_case_name, actuators)
-        actuator_coords = []
+        action_patch = []
+        self.action_patch_geometric_data = {}
+        for interface in self._controller_config["write_to"]:
+            if interface in openfoam_interface_patches:
+                action_patch.append(interface)
+        self.action_patch_geometric_data = get_patch_geometry(
+            openfoam_case_name, action_patch
+        )
+        action_patch_coords = {}
+        for patch_name in self.action_patch_geometric_data.keys():
+            action_patch_coords[patch_name] = [
+                np.delete(coord, 2)
+                for coord in self.action_patch_geometric_data[patch_name]["face_centre"]
+            ]
 
-        for patch_name in self.actuator_geometric_data.keys():
-            actuator_coords.append(
-                [
-                    np.delete(coord, 2)
-                    for coord in self.actuator_geometric_data[patch_name]["face_centre"]
+        observation_patch = []
+        for interface in self._controller_config["read_from"]:
+            if interface in openfoam_interface_patches:
+                observation_patch.append(interface)
+        self.observation_patch_geometric_data = get_patch_geometry(
+            openfoam_case_name, observation_patch
+        )
+        observation_patch_coords = {}
+        for patch_name in self.observation_patch_geometric_data.keys():
+            observation_patch_coords[patch_name] = [
+                np.delete(coord, 2)
+                for coord in self.observation_patch_geometric_data[patch_name][
+                    "face_centre"
                 ]
-            )
-        self._set_precice_vectices(actuator_coords)
+            ]
+
+        patch_coords = {
+            "read_from": observation_patch_coords,
+            "write_to": action_patch_coords,
+        }
+
+        self._set_precice_vectices(patch_coords)
 
     @property
     def n_probes(self):
+        """Get the number of pressure probes."""
         return self._n_probes
 
     @n_probes.setter
     def n_probes(self, value):
+        """Set the number of pressure probes."""
         self._n_probes = value
         self._observation_info["n_probes"] = value
         self.observation_space = gym.spaces.Box(
@@ -110,20 +171,24 @@ class JetCylinder2DEnv(Adapter):
 
     @property
     def n_forces(self):
+        """Get the number of data columns in forces file (excluding the time column)."""
         return self._n_forces
 
     @n_forces.setter
     def n_forces(self, value):
+        """Set the number of data columns in forces file (excluding the time column)."""
         assert value >= 3, "Number of forceCoeff columns must be greater than 2"
         self._n_forces = value
         self._reward_info["n_forces"] = value
 
     @property
     def min_jet_rate(self):
+        """Get the minimum flow rate of the synthetic jet."""
         return self._min_jet_rate
 
     @min_jet_rate.setter
     def min_jet_rate(self, value):
+        """Set the minimum flow rate of the synthetic jet."""
         self._min_jet_rate = value
         self.action_space = gym.spaces.Box(
             low=value, high=self._max_jet_rate, shape=(1,), dtype=np.float32
@@ -131,10 +196,12 @@ class JetCylinder2DEnv(Adapter):
 
     @property
     def max_jet_rate(self):
+        """Get the maximum flow rate of the synthetic jet."""
         return self._max_jet_rate
 
     @max_jet_rate.setter
     def max_jet_rate(self, value):
+        """Set the maximum flow rate of the synthetic jet."""
         self._max_jet_rate = value
         self.action_space = gym.spaces.Box(
             low=self._min_jet_rate, high=value, shape=(1,), dtype=np.float32
@@ -142,10 +209,12 @@ class JetCylinder2DEnv(Adapter):
 
     @property
     def latest_available_sim_time(self):
+        """Get the starting time of the flow field simulation."""
         return self._latest_available_sim_time
 
     @latest_available_sim_time.setter
     def latest_available_sim_time(self, value):
+        """Set the starting time of the flow field simulation."""
         if value == 0.0:
             value = int(value)
         self._latest_available_sim_time = value
@@ -156,13 +225,18 @@ class JetCylinder2DEnv(Adapter):
         self._prerun_data_required = value > 0.0
 
     def step(self, action):
+        r"""Distribute the control action smoothly and linearly over `self.action_interval` simulation time steps."""
         return self._smooth_step(action)
 
     def _get_action(self, action, write_var_list):
-        velocity = self._action_to_patch_field(action)
-        return {write_var_list[0]: velocity}
+        acuation_interface_field = self._action_to_patch_field(action)
+        write_data = {
+            var: acuation_interface_field[var.rpartition("-")[-1]]
+            for var in write_var_list
+        }
+        return write_data
 
-    def _get_observation(self):
+    def _get_observation(self, read_data, read_var_list):
         return self._probes_to_observation()
 
     def _get_reward(self):
@@ -182,22 +256,24 @@ class JetCylinder2DEnv(Adapter):
             raise err
 
     def _action_to_patch_field(self, action):
-        theta0 = [np.radians(x) for x in self.jet_angle]
-        w = [np.radians(x) for x in self.jet_width]
         origin = self.cylinder_origin
         radius = self.cylinder_radius
         patch_flow_rate = [-action, action]
 
         # velocity field of the actuation patches
-        U = []
-        for idx, patch_name in enumerate(self.actuator_geometric_data.keys()):
+        U_profile = {}
+        for idx, patch_name in enumerate(self.action_patch_geometric_data.keys()):
             patch_ctr = np.array(
-                [radius * np.cos(theta0[idx]), radius * np.sin(theta0[idx]), origin[2]]
+                [
+                    radius * np.cos(self.theta0[idx]),
+                    radius * np.sin(self.theta0[idx]),
+                    origin[2],
+                ]
             )
-            magSf = self.actuator_geometric_data[patch_name]["face_area_mag"]
-            Sf = self.actuator_geometric_data[patch_name]["face_area_vector"]
-            nf = self.actuator_geometric_data[patch_name]["face_normal"]
-            w_patch = w[idx]
+            magSf = self.action_patch_geometric_data[patch_name]["face_area_mag"]
+            Sf = self.action_patch_geometric_data[patch_name]["face_area_vector"]
+            nf = self.action_patch_geometric_data[patch_name]["face_normal"]
+            w_patch = self.w[idx]
 
             # convert volumetric flow rate to a sinusoidal profile on the interface
             avg_U = (patch_flow_rate[idx] / np.sum(magSf)).item()
@@ -219,11 +295,12 @@ class JetCylinder2DEnv(Adapter):
             Q_final = sum([u.dot(s) for u, s in zip(U_patch, Sf)])
 
             if np.isclose(Q_final, patch_flow_rate[idx]):
-                U.append(U_patch)
+                U_profile[patch_name] = np.array(
+                    [np.delete(item, 2) for item in U_patch]
+                )
             else:
                 raise Exception("Not a synthetic jet: Q_jet1 + Q_jet2 is not zero")
 
-        U_profile = np.array([np.delete(item, 2) for sublist in U for item in sublist])
         return U_profile
 
     def _probes_to_observation(self):

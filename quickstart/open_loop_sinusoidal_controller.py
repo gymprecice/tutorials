@@ -37,7 +37,7 @@ if __name__ == "__main__":
     _, _ = env.reset()
 
     print("\n...")
-    print("The control case is running!")
+    print("The sinusoidal control case is running!")
     print(
         "This task is expected to be completed in about 5 minutes on a system with two cores @ 2.10GHz."
     )

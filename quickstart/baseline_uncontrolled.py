@@ -37,8 +37,7 @@ if __name__ == "__main__":
 
     # step through the environment and control it for one complete episode (8 seconds, 320 steps)
     while not terminated:
-        with torch.no_grad():
-            action = controller.act()
+        action = controller.act()
         _, _, terminated, _, _ = env.step(action)
 
     print("The baseline case is done.")
