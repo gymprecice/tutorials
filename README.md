@@ -1,5 +1,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/gymprecice/gymprecice/blob/master/LICENSE.md)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![pre-Commit Check](https://github.com/gymprecice/tutorials/actions/workflows/pre-commit.yml/badge.svg)](https://github.com/gymprecice/tutorials/actions/workflows/pre-commit.yml)
 ## Gym-preCICE Tutorials
 
 This repository contains ready-to-run tutorial cases that use the Gym-preCICE adapter. These tutorials can be used as a foundation for creating similar control cases.
