@@ -53,7 +53,7 @@ functions
 {
     #includeFunc forceCoeffs
     #includeFunc probes
-    #includeFunc preCICE_Adapter 
+    #includeFunc preCICE_Adapter
 }
 
 

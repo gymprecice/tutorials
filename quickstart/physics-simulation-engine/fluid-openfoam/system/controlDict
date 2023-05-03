@@ -55,7 +55,7 @@ functions
     #includeFunc probes
     #includeFunc flowRateJet1
     #includeFunc flowRateJet2
-    #includeFunc preCICE_Adapter 
+    #includeFunc preCICE_Adapter
 }
 
 

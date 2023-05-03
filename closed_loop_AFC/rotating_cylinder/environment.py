@@ -1,22 +1,59 @@
-import gymnasium as gym
-from gymprecice.core import Adapter
-
-from os.path import join
-import numpy as np
-import math
-from scipy import signal
+"""AFC environment for rotating cylinder control."""
 import logging
+import math
+from os.path import join
 
-from gymprecice.utils.openfoamutils import get_interface_patches, get_patch_geometry
-from gymprecice.utils.openfoamutils import read_line
+import gymnasium as gym
+import numpy as np
+from gymprecice.core import Adapter
 from gymprecice.utils.fileutils import open_file
+from gymprecice.utils.openfoamutils import (
+    get_interface_patches,
+    get_patch_geometry,
+    read_line,
+)
+from scipy import signal
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
 
 
 class RotatingCylinder2DEnv(Adapter):
-    def __init__(self, options, idx=0) -> None:
+    r"""An AFC environment for jet cylinder control.
+
+    ## Description
+    We control flow rate of a rotating rigid cylinder immersed in a two-dimensional incompressible channel flow.
+    The goal is to reduce drag forces acting on the cylinder.
+    This concept of the actuation system (a rotating cylinder) in this environment is adapted from ["drlfoam"](https://github.com/OFDataCommittee/drlfoam/tree/main/openfoam).
+
+    ## Action Space
+    The action is a `ndarray` with shape `(1,)` which can take values in the range of `[-5.0, 5.0]` with the value corresponding to
+    the angular velocity of the rotating cylinder.
+    **Note**: Each control action (angular velocity of the rotating cylinder) is smoothly and linearly distributed over `self.action_interval` simulation time steps.
+
+    ## Observation Space
+    The observation is a `ndarray` with shape `(151,)` which can take values in the range of `[-Inf, Inf]` with the values corresponding to
+    pressure sensor probes allocated within the flow filed.
+
+    ## Rewards
+    Since the goal is to keep the drag forces acting on the cylinder as minimum as possible, a reward is defined based on the following relation:
+    reward = <Cd> - 0.2 * |<Cl>|, where <Cd> and <Cl> are respectively drag and lift coefficients of the cylinder averaged over the latest 0.335 s simulation time.
+    including the termination step, is allotted. The threshold for rewards is 500 for v1 and 200 for v0.
+
+    ## Episode End
+    The episode ends after two seconds of flow field simulation.
+
+    Args:
+        Adapter: gymprecice adapter super-class
+    """
+
+    def __init__(self, options: dict = None, idx: int = 0) -> None:
+        """Environment constructor.
+
+        Args:
+            options: a dictionary containing the information within gymprecice-config.json. It is a return of `gymprecice.utils.fileutils.make_result_dir` method called within the controller algorithm.
+            idx: environment index.
+        """
         super().__init__(options, idx)
         self.cylinder_axis = np.array([0, 0, 1])
         self.cylinder_radius = 0.05
@@ -111,10 +148,12 @@ class RotatingCylinder2DEnv(Adapter):
 
     @property
     def n_probes(self):
+        """Get the number of pressure probes."""
         return self._n_probes
 
     @n_probes.setter
     def n_probes(self, value):
+        """Set the number of pressure probes."""
         self._n_probes = value
         self._observation_info["n_probes"] = value
         self.observation_space = gym.spaces.Box(
@@ -123,20 +162,24 @@ class RotatingCylinder2DEnv(Adapter):
 
     @property
     def n_forces(self):
+        """Get the number of data columns in forces file (excluding the time column)."""
         return self._n_forces
 
     @n_forces.setter
     def n_forces(self, value):
+        """Set the number of data columns in forces file (excluding the time column)."""
         assert value >= 3, "Number of forceCoeff columns must be greater than 2"
         self._n_forces = value
         self._reward_info["n_forces"] = value
 
     @property
     def min_omega(self):
+        """Get the minimum angular velocity of the rotating cylinder."""
         return self._min_omega
 
     @min_omega.setter
     def min_omega(self, value):
+        """Set the minimum angular velocity of the rotating cylinder."""
         self._min_omega = value
         self.action_space = gym.spaces.Box(
             low=value, high=self._max_omega, shape=(1,), dtype=np.float32
@@ -144,10 +187,12 @@ class RotatingCylinder2DEnv(Adapter):
 
     @property
     def max_omega(self):
+        """Get the maximum angular velocity of the rotating cylinder."""
         return self._max_omega
 
     @max_omega.setter
     def max_omega(self, value):
+        """Set the maximum angular velocity of the rotating cylinder."""
         self._max_omega = value
         self.action_space = gym.spaces.Box(
             low=self._min_omega, high=value, shape=(1,), dtype=np.float32
@@ -155,10 +200,12 @@ class RotatingCylinder2DEnv(Adapter):
 
     @property
     def latest_available_sim_time(self):
+        """Get the starting time of the flow field simulation."""
         return self._latest_available_sim_time
 
     @latest_available_sim_time.setter
     def latest_available_sim_time(self, value):
+        """Set the starting time of the flow field simulation."""
         if value == 0.0:
             value = int(value)
         self._latest_available_sim_time = value
@@ -169,6 +216,7 @@ class RotatingCylinder2DEnv(Adapter):
         self._prerun_data_required = value > 0.0
 
     def step(self, action):
+        r"""Distribute the control action smoothly and linearly over `self.action_interval` simulation time steps."""
         return self._smooth_step(action)
 
     def _get_action(self, action, write_var_list):
@@ -195,7 +243,7 @@ class RotatingCylinder2DEnv(Adapter):
                 self._reward_info["file_handler"].close()
                 self._reward_info["file_handler"] = None
         except Exception as err:
-            logger.error(f"Can't close probes/forces file")
+            logger.error("Can't close probes/forces file")
             raise err
 
     def _action_to_patch_field(self, action):

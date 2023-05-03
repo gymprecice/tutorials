@@ -26,10 +26,9 @@ U_inlet
             //Um 10; - maximum velocity at the center of the channel
             //H 4; - channel height
             vel { dir (1 0 0); }
-            expression #{ 4*10*pos().y()*(4-pos().y())/(4*4)*$[(vector)vel.dir] #};   
+            expression #{ 4*10*pos().y()*(4-pos().y())/(4*4)*$[(vector)vel.dir] #};
         }
     );
 }
 
 // ************************************************************************* //
-

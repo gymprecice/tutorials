@@ -1,8 +1,9 @@
-import gymnasium as gym
-from gymprecice.utils.fileutils import make_result_dir
-from environment import PerpendicularFlapEnv
-import torch
 import math
+
+import gymnasium as gym
+import torch
+from environment import PerpendicularFlapEnv
+from gymprecice.utils.fileutils import make_result_dir
 
 
 class Controller:
@@ -13,7 +14,7 @@ class Controller:
         self.action_bias = (env.action_space.high + env.action_space.low) / 2.0
 
     def act(self):
-        unscaled_action =  math.sin(math.pi * self._t)
+        unscaled_action = math.sin(math.pi * self._t)
         action = unscaled_action * self.action_scale + self.action_bias
         self._t += self._dt
         return action
@@ -29,7 +30,7 @@ if __name__ == "__main__":
     env.latest_available_sim_time = 0
     env.action_interval = 1
     env.inlet_max_velocity = 15
-    env.jet_width = 2.0
+    env.jet_height = 2.0
     terminated = False
 
     # create the sinusoidal controller

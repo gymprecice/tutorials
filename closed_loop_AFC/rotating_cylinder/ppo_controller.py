@@ -1,25 +1,21 @@
-from environment import RotatingCylinder2DEnv
-
-import gymnasium as gym
-from gymnasium.vector.async_vector_env import AsyncVectorEnv
-
-from gymprecice.utils.constants import EPSILON, LOG_EPSILON
-from gymprecice.utils.multienvutils import worker_with_lock
-from gymprecice.utils.fileutils import make_result_dir
-
-import torch
-import torch.nn as nn
-from torch.optim import Adam
-from torch.distributions import Normal
-
-import numpy as np
+import argparse
+import logging
 import math
 import time
-import logging
-
-from typing import Optional
-import argparse
 from distutils.util import strtobool
+from typing import Optional
+
+import gymnasium as gym
+import numpy as np
+import torch
+import torch.nn as nn
+from environment import RotatingCylinder2DEnv
+from gymnasium.vector.async_vector_env import AsyncVectorEnv
+from gymprecice.utils.constants import EPSILON, LOG_EPSILON
+from gymprecice.utils.fileutils import make_result_dir
+from gymprecice.utils.multienvutils import worker_with_lock
+from torch.distributions import Normal
+from torch.optim import Adam
 
 try:
     from collections.abc import Iterable
@@ -210,7 +206,7 @@ def parse_args():
         "--dump-policy-freq",
         type=int,
         default=10,
-        help="the freqency of saving policy on hard-drive",
+        help="the frequency of saving policy on hard-drive",
     )
     parser.add_argument(
         "--track",

@@ -1,25 +1,20 @@
-### a work-around to find teh parent package (gymprecice-tutorials) without any installation setup
+# a work-around to find the parent package (tutorials) without any installation setup
+import math
 import sys
-from os import getcwd
-sys.path.append(getcwd())
-###
-
-import pytest
-from pytest_mock import mocker, class_mocker
-
+from os import chdir, getcwd, makedirs, path, system
 from shutil import rmtree
-from os import chdir, path, makedirs, system
 
 import numpy as np
-import math
+import pytest
 
-from . import mocked_core
-from . import mocked_precice
+from . import mocked_core, mocked_precice
+
+sys.path.append(getcwd())
 
 
 @pytest.fixture
 def testdir(tmpdir):
-    test_dir = tmpdir.mkdir("test-jet-cylinder")
+    test_dir = tmpdir.mkdir("test-rotating-cylinder")
     yield chdir(test_dir)
     rmtree(test_dir)
 
@@ -27,11 +22,11 @@ def testdir(tmpdir):
 @pytest.fixture
 def patch_env_helpers(mocker):
     mocker.patch(
-        "closed_loop_AFC.jet_control_cylinder.environment.get_interface_patches",
+        "closed_loop_AFC.rotating_cylinder.environment.get_interface_patches",
         return_value=[],
     )
     mocker.patch(
-        "closed_loop_AFC.jet_control_cylinder.environment.get_patch_geometry",
+        "closed_loop_AFC.rotating_cylinder.environment.get_patch_geometry",
         return_value={},
     )
 
@@ -64,53 +59,50 @@ def mock_precice(class_mocker):
 
 
 ENVIRONMENT_CONFIG = {
-    "environment": {
-        "name": "rotating_cylinder_2d"
+    "environment": {"name": "rotating_cylinder"},
+    "physics_simulation_engine": {
+        "solvers": ["fluid-openfoam"],
+        "reset_script": "reset.sh",
+        "run_script": "run.sh",
     },
-    "solvers": {
-        "name": ["fluid-openfoam"],
-        "reset_script": "clean.sh",
-        "run_script": "run.sh"
-    },
-    "actuators": {
-        "name": ["cylinder"]
-    }
+    "controller": {"read_from": {}, "write_to": {"cylinder": "Velocity"}},
 }
 
 
-class TestJetCylinder2D:
+class TestRotatingCylinder2D:
     gymprecice_tutorials_dir = getcwd()
+
     def make_env(self):
-        from closed_loop_AFC.jet_control_cylinder.environment import JetCylinder2DEnv
-        JetCylinder2DEnv.__bases__ = (mocked_core.Adapter,)
+        from closed_loop_AFC.rotating_cylinder.environment import (
+            RotatingCylinder2DEnv,
+        )
 
-        return JetCylinder2DEnv(ENVIRONMENT_CONFIG)
-
-    def test_base(self, testdir, mock_precice):
-        from closed_loop_AFC.jet_control_cylinder.environment import JetCylinder2DEnv
-        assert JetCylinder2DEnv.__base__.__name__ == mocked_core.Adapter.__name__
+        RotatingCylinder2DEnv.__bases__ = (mocked_core.Adapter,)
+        return RotatingCylinder2DEnv(ENVIRONMENT_CONFIG)
 
     def test_base(self, testdir, mock_precice):
-        from closed_loop_AFC.jet_control_cylinder.environment import JetCylinder2DEnv
-        assert JetCylinder2DEnv.__base__.__name__ == mocked_core.Adapter.__name__
+        from closed_loop_AFC.rotating_cylinder.environment import (
+            RotatingCylinder2DEnv,
+        )
 
-    def test_setters(self, testdir, patch_env_helpers, mock_adapter):
+        assert RotatingCylinder2DEnv.__base__.__name__ == mocked_core.Adapter.__name__
+
+    def test_setters(self, testdir, patch_env_helpers, mock_adapter, mock_precice):
         n_probes = 10
         n_forces = 4
-        min_jet_rate = -1
-        max_jet_rate = 1
+        min_omega = -1
+        max_omega = 1
         env = self.make_env()
         env.n_probes = n_probes
         env.n_forces = n_forces
-        env.min_jet_rate = min_jet_rate
-        env.max_jet_rate = max_jet_rate
+        env.min_omega = min_omega
+        env.max_omega = max_omega
 
         check = {
             "n_of_probes": env._observation_info["n_probes"] == n_probes,
             "n_of_forces": env._reward_info["n_forces"] == n_forces,
             "action_space": (
-                env.action_space.high == max_jet_rate
-                and env.action_space.low == min_jet_rate
+                env.action_space.high == max_omega and env.action_space.low == min_omega
             ),
             "obs_space": env.observation_space.shape == (n_probes,),
         }
@@ -122,31 +114,31 @@ class TestJetCylinder2D:
             (
                 0,
                 [
-                    f"/postProcessing/probes/0/p",
-                    f"/postProcessing/forceCoeffs/0/coefficient.dat",
+                    "/postProcessing/probes/0/p",
+                    "/postProcessing/forceCoeffs/0/coefficient.dat",
                     False,
                 ],
             ),
             (
                 0.0,
                 [
-                    f"/postProcessing/probes/0/p",
-                    f"/postProcessing/forceCoeffs/0/coefficient.dat",
+                    "/postProcessing/probes/0/p",
+                    "/postProcessing/forceCoeffs/0/coefficient.dat",
                     False,
                 ],
             ),
             (
                 0.25,
                 [
-                    f"/postProcessing/probes/0.25/p",
-                    f"/postProcessing/forceCoeffs/0.25/coefficient.dat",
+                    "/postProcessing/probes/0.25/p",
+                    "/postProcessing/forceCoeffs/0.25/coefficient.dat",
                     True,
                 ],
             ),
         ],
     )
     def test_latest_time(
-        self, testdir, patch_env_helpers, mock_adapter, input, expected
+        self, testdir, patch_env_helpers, mock_adapter, mock_precice, input, expected
     ):
         env = self.make_env()
         env.latest_available_sim_time = input
@@ -165,10 +157,10 @@ class TestJetCylinder2D:
         path_to_probes_dir = path.join(
             getcwd(), f"postProcessing/probes/{latest_available_sim_time}/"
         )
-        makedirs(path_to_probes_dir)
+        makedirs(path_to_probes_dir, exist_ok=True)
 
-        input = """# Time       p0      p1      p2      p3      p4 
-            0.335       1.0     2.0     3.0     4.0     5.0     
+        input = """# Time       p0      p1      p2      p3      p4
+            0.335       1.0     2.0     3.0     4.0     5.0
         """
         with open(path.join(path_to_probes_dir, "p"), "w") as file:
             file.write(input)
@@ -183,45 +175,54 @@ class TestJetCylinder2D:
 
         assert np.array_equal(output, expected)
 
-    def test_get_action(self, testdir, mock_adapter, mocker):
+    def test_get_action(self, testdir, mock_adapter, mock_precice, mocker):
         mocker.patch(
-            "closed_loop_AFC.jet_control_cylinder.environment.get_interface_patches",
-            return_value=["jet1", "jet2"],
+            "closed_loop_AFC.rotating_cylinder.environment.get_interface_patches",
+            return_value=["cylinder"],
         )
-
-        sim_engine = path.join(TestJetCylinder2D.gymprecice_tutorials_dir,
-                               "closed_loop_AFC/jet_control_cylinder/physics-simulation-engine")
-        solver_names = ENVIRONMENT_CONFIG["solvers"]["name"]
+        sim_engine = path.join(
+            TestRotatingCylinder2D.gymprecice_tutorials_dir,
+            "closed_loop_AFC/rotating_cylinder/physics-simulation-engine",
+        )
+        solver_names = ENVIRONMENT_CONFIG["physics_simulation_engine"]["solvers"]
         solver_dir = [path.join(sim_engine, solver) for solver in solver_names][0]
         print(solver_dir)
         makedirs(f"{getcwd()}/{solver_names[0]}/constant", exist_ok=True)
         system(f"cp -r {solver_dir}/constant {getcwd()}/{solver_names[0]}")
 
         input = np.array([-1.0, 1.0])
+        expected = 0.05
 
         env = self.make_env()
         output0 = env._action_to_patch_field(input[0])
         output1 = env._action_to_patch_field(input[1])
+        output0_norm = np.linalg.norm(output0["cylinder"], axis=1)
+        output1_norm = np.linalg.norm(output1["cylinder"], axis=1)
 
-        assert np.array_equal(output0, np.negative(output1))
+        check = {
+            "rotating_surface_speed_0": np.all(np.isclose(output0_norm, expected)),
+            "rotating_surface_speed_1": np.all(np.isclose(output1_norm, expected)),
+            "switch_rotating_direction": np.array_equal(
+                output0["cylinder"], np.negative(output1["cylinder"])
+            ),
+        }
+        assert all(check.values())
 
-    def test_get_reward(self, testdir, patch_env_helpers, mock_adapter):
+    def test_get_reward(self, testdir, patch_env_helpers, mock_adapter, mock_precice):
         latest_available_sim_time = 0.335
         reward_average_time_window = 1
         n_forces = 3
 
-        path_to_forces_dir_0 = path.join(
-            getcwd(), f"postProcessing/forceCoeffs/0/"
-        )
-        makedirs(path_to_forces_dir_0)
+        path_to_forces_dir_0 = path.join(getcwd(), "postProcessing/forceCoeffs/0/")
+        makedirs(path_to_forces_dir_0, exist_ok=True)
 
         path_to_forces_dir_1 = path.join(
             getcwd(), f"postProcessing/forceCoeffs/{latest_available_sim_time}/"
         )
-        makedirs(path_to_forces_dir_1)
+        makedirs(path_to_forces_dir_1, exist_ok=True)
 
-        input = """# Time    Cd   Cs   Cl 
-            0.335  1.0  0    2.0     
+        input = """# Time    Cd   Cs   Cl
+            0.335  1.0  0    2.0
         """
         with open(path.join(path_to_forces_dir_0, "coefficient.dat"), "w") as file:
             file.write(input)

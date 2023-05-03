@@ -1,10 +1,11 @@
+from os import getcwd, system
+
 import gymnasium as gym
-from gymprecice.utils.fileutils import make_result_dir
-from environment import JetCylinder2DEnv
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
-from os import path, getcwd, system
+from environment import JetCylinder2DEnv
+from gymprecice.utils.fileutils import make_result_dir
 
 
 class Controller(nn.Module):
@@ -50,10 +51,11 @@ if __name__ == "__main__":
     # reset the environment
     obs, info = env.reset()
 
-    
     print("\n...")
     print("The control case is running!")
-    print("This task is expected to be completed in about 5 minutes on a system with two cores @ 2.10GHz.")
+    print(
+        "This task is expected to be completed in about 5 minutes on a system with two cores @ 2.10GHz."
+    )
     print("...\n")
 
     # step through the environment and control it for one complete episode (8 seconds, 320 steps)
@@ -61,8 +63,8 @@ if __name__ == "__main__":
         with torch.no_grad():
             action = controller.act(obs)
         obs, _, terminated, _, _ = env.step(action)
-    
+
     print("The control case is done.")
-    
+
     # close the environment
     env.close()

@@ -1,16 +1,24 @@
-import gymnasium as gym
-
 from abc import ABC, abstractmethod
-from os import path, getcwd
+from os import getcwd, path
+
+import gymnasium as gym
 
 
 class Adapter(ABC, gym.Env):
     """
     Mock class to represent gymprecice 'Adapter' in all environment tests.
     """
+
     def __init__(self, options, *args) -> None:
-        self._solver_list = options["solvers"]["name"]
-        self._actuator_list = options["actuators"]["name"]
+        self._solver_list = options["physics_simulation_engine"]["solvers"]
+        self._solver_list = options["physics_simulation_engine"]["solvers"]
+        self._reset_script = options["physics_simulation_engine"]["reset_script"]
+        self._prerun_script = options["physics_simulation_engine"].get(
+            "prerun_script", self._reset_script
+        )
+        self._run_script = options["physics_simulation_engine"]["run_script"]
+        self._controller_config = options["controller"]
+
         self._env_dir = "env_0"
         self._env_path = path.join(getcwd(), self._env_dir)
         self._t = 0

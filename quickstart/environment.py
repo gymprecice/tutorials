@@ -1,15 +1,17 @@
-import gymnasium as gym
-from gymprecice.core import Adapter
-
-from os.path import join
-import numpy as np
-import math
-from scipy import signal
 import logging
+import math
+from os.path import join
 
-from gymprecice.utils.openfoamutils import get_interface_patches, get_patch_geometry
-from gymprecice.utils.openfoamutils import read_line
+import gymnasium as gym
+import numpy as np
+from gymprecice.core import Adapter
 from gymprecice.utils.fileutils import open_file
+from gymprecice.utils.openfoamutils import (
+    get_interface_patches,
+    get_patch_geometry,
+    read_line,
+)
+from scipy import signal
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
@@ -176,7 +178,7 @@ class JetCylinder2DEnv(Adapter):
                 self._reward_info["file_handler"].close()
                 self._reward_info["file_handler"] = None
         except Exception as err:
-            logger.error(f"Can't close probes/forces file")
+            logger.error("Can't close probes/forces file")
             raise err
 
     def _action_to_patch_field(self, action):
@@ -200,7 +202,7 @@ class JetCylinder2DEnv(Adapter):
             # convert volumetric flow rate to a sinusoidal profile on the interface
             avg_U = (patch_flow_rate[idx] / np.sum(magSf)).item()
             d = (patch_ctr - origin) / (
-                np.sqrt((patch_ctr - origin).dot((patch_ctr - origin)))
+                np.sqrt((patch_ctr - origin).dot(patch_ctr - origin))
             )
 
             # estimate flow rate based on the sinusoidal profile

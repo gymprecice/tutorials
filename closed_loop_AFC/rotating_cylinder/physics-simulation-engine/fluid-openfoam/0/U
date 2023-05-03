@@ -18,7 +18,7 @@ FoamFile
 
 dimensions      [ 0 1 -1 0 0 0 0 ];
 
-internalField   nonuniform List<vector> 
+internalField   nonuniform List<vector>
 16200
 (
 (0.1077787 -0.016328877 9.0946545e-28)
@@ -16229,7 +16229,7 @@ boundaryField
     inlet
     {
         type            fixedValue;
-        value           nonuniform List<vector> 
+        value           nonuniform List<vector>
 21
 (
 (0.78366059 0 0)

@@ -28,12 +28,12 @@ interfaces
     mesh              Fluid-Mesh;
     locations         faceCenters;
     patches           (cylinder);
-    
+
     readData
     (
       Velocity
     );
-    
+
     writeData
     (
     );

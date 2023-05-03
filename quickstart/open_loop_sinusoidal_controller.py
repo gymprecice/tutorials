@@ -1,7 +1,8 @@
-import gymnasium as gym
-from gymprecice.utils.fileutils import make_result_dir
-from environment import JetCylinder2DEnv
 import math
+
+import gymnasium as gym
+from environment import JetCylinder2DEnv
+from gymprecice.utils.fileutils import make_result_dir
 
 
 class Controller:
@@ -35,18 +36,19 @@ if __name__ == "__main__":
     # reset the environment
     _, _ = env.reset()
 
-    
     print("\n...")
     print("The control case is running!")
-    print("This task is expected to be completed in about 5 minutes on a system with two cores @ 2.10GHz.")
+    print(
+        "This task is expected to be completed in about 5 minutes on a system with two cores @ 2.10GHz."
+    )
     print("...\n")
 
     # step through the environment and control it for one complete episode (8 seconds, 320 steps)
     while not terminated:
         action = controller.act()
         _, _, terminated, _, _ = env.step(action)
-    
+
     print("The control case is done.")
-    
+
     # close the environment
     env.close()

@@ -37,7 +37,7 @@ timePrecision   6;
 
 functions
 {
-    #includeFunc preCICE_Adapter 
+    #includeFunc preCICE_Adapter
     #includeFunc probes
     #includeFunc flowRateInlet
 }

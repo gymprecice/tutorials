@@ -20,7 +20,7 @@ dimensions      [0 3 -1 0 0 0 0];
 
 oriented        oriented;
 
-internalField   nonuniform List<scalar> 
+internalField   nonuniform List<scalar>
 11923
 (
 -0.00010019509
@@ -11959,7 +11959,7 @@ boundaryField
     outlet
     {
         type            calculated;
-        value           nonuniform List<scalar> 
+        value           nonuniform List<scalar>
 21
 (
 0.0013436586
@@ -12009,7 +12009,7 @@ boundaryField
     procBoundary1to0
     {
         type            processor;
-        value           nonuniform List<scalar> 
+        value           nonuniform List<scalar>
 96
 (
 -0.00054821541

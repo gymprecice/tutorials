@@ -44,7 +44,7 @@ cleanPrecice()
 
 (
     cleanCase
-    cleanPrecice 
+    cleanPrecice
     decomposePar -force > log.decomposePar 2>&1 &
     renumberMesh -overwrite > log.renumberMesh 2>&1 &
 )

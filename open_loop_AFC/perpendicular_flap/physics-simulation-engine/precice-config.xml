@@ -73,7 +73,7 @@
       <use-mesh name="Controller-Mesh" provide="yes" />
       <use-mesh name="Fluid-Mesh-Flap" from="Fluid" />
       <use-mesh name="Fluid-Mesh-Actuator" from="Fluid"/>
-      <read-data name="Force" mesh="Controller-Mesh" />  
+      <read-data name="Force" mesh="Controller-Mesh" />
       <write-data name="Velocity" mesh="Controller-Mesh" />
     </participant>
 

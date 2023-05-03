@@ -5,7 +5,7 @@
 patches (cylinder);
 
 magUInf     1;
-lRef        0.1;	
+lRef        0.1;
 Aref        4.475757e-3;
 
 liftDir     (0 1 0);

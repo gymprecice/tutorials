@@ -18,7 +18,7 @@ FoamFile
 
 dimensions      [0 1 -1 0 0 0 0];
 
-internalField   nonuniform List<vector> 
+internalField   nonuniform List<vector>
 8100
 (
 (0.77438995 0.019334741 -3.9941528e-20)
@@ -8129,7 +8129,7 @@ boundaryField
     inlet
     {
         type            fixedValue;
-        value           nonuniform List<vector> 
+        value           nonuniform List<vector>
 21
 (
 (0.78366059 0 0)
@@ -8180,7 +8180,7 @@ boundaryField
     procBoundary0to1
     {
         type            processor;
-        value           nonuniform List<vector> 
+        value           nonuniform List<vector>
 96
 (
 (0.92177658 0.021722939 -1.4704951e-19)

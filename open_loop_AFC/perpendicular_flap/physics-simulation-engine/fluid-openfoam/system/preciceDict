@@ -19,12 +19,12 @@ interfaces
     mesh              Fluid-Mesh-Flap;
     patches           (flap);
     locations         faceCenters;
-    
+
     readData
     (
       Displacement
     );
-    
+
     writeData
     (
       Force
@@ -36,12 +36,12 @@ interfaces
     mesh              Fluid-Mesh-Actuator;
     patches           (inlet);
     locations         faceCenters;
-    
+
     readData
     (
       Velocity
     );
-    
+
     writeData
     (
     );

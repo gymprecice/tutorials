@@ -11,7 +11,7 @@ solvers
 
     p
     {
-            
+
     solver           PCG;
     preconditioner   DIC;
     tolerance        1e-8;
@@ -64,7 +64,7 @@ PIMPLE
     // relTol 5e-3;
     consistent  true;
     correctPhi  true;
-    momentumPredictor true; 
+    momentumPredictor true;
     nOuterCorrectors	1;
 }
 

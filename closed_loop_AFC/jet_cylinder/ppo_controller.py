@@ -1,26 +1,22 @@
-from environment import JetCylinder2DEnv
+import argparse
+import logging
+import math
+import random
+import time
+from distutils.util import strtobool
+from typing import Optional
 
 import gymnasium as gym
-from gymnasium.vector.async_vector_env import AsyncVectorEnv
-
-from gymprecice.utils.constants import EPSILON, LOG_EPSILON
-from gymprecice.utils.multienvutils import worker_with_lock
-from gymprecice.utils.fileutils import make_result_dir
-
+import numpy as np
 import torch
 import torch.nn as nn
-from torch.optim import Adam
+from environment import JetCylinder2DEnv
+from gymnasium.vector.async_vector_env import AsyncVectorEnv
+from gymprecice.utils.constants import EPSILON, LOG_EPSILON
+from gymprecice.utils.fileutils import make_result_dir
+from gymprecice.utils.multienvutils import worker_with_lock
 from torch.distributions import Normal
-
-import numpy as np
-import math
-import time
-import logging
-import random
-
-from typing import Optional
-import argparse
-from distutils.util import strtobool
+from torch.optim import Adam
 
 try:
     from collections.abc import Iterable
@@ -182,7 +178,9 @@ class WandBRewardRecoder(gym.Wrapper):
 def parse_args():
     # Training specific arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("--seed", type=int, default=12345, help="seed of the experiment")
+    parser.add_argument(
+        "--seed", type=int, default=12345, help="seed of the experiment"
+    )
     parser.add_argument(
         "--torch-deterministic",
         type=lambda x: bool(strtobool(x)),
@@ -209,7 +207,7 @@ def parse_args():
         "--dump-policy-freq",
         type=int,
         default=10,
-        help="the freqency of saving policy on hard-drive",
+        help="the frequency of saving policy on hard-drive",
     )
     parser.add_argument(
         "--track",
@@ -366,7 +364,6 @@ if __name__ == "__main__":
         except ImportError as err:
             logger.error("wandb is not installed, run `pip install gymprecice[vis]`")
             raise err
-    
 
     # TRY NOT TO MODIFY: seeding
     random.seed(args.seed)
@@ -438,7 +435,7 @@ if __name__ == "__main__":
     next_obs = torch.Tensor(envs.reset()[0]).to(device)
     next_done = torch.zeros(args.num_envs).to(device)
     for update in range(1, args.num_updates + 1):
-        print(f"updateing loop: update number {update}")
+        print(f"updating loop: update number {update}")
         # Annealing the rate if instructed to do so.
         if args.anneal_lr:
             frac = 1.0 - (update - 1.0) / args.num_updates

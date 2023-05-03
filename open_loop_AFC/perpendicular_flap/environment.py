@@ -1,40 +1,79 @@
-import gymnasium as gym
-from gymprecice.core import Adapter
-
-from os.path import join
-import numpy as np
-import math
-from scipy import signal
+"""AFC environment for perpendicular-flap control."""
 import logging
+import math
+from os.path import join
 
-from gymprecice.utils.openfoamutils import get_interface_patches, get_patch_geometry
-from gymprecice.utils.openfoamutils import read_line
+import gymnasium as gym
+import numpy as np
+from gymprecice.core import Adapter
 from gymprecice.utils.fileutils import open_file
+from gymprecice.utils.openfoamutils import (
+    get_interface_patches,
+    get_patch_geometry,
+    read_line,
+)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
 
 
 class PerpendicularFlapEnv(Adapter):
-    def __init__(self, options, idx=0) -> None:
+    r"""An AFC environment to perform open-loop control for a wall-mounted elastic flap in a two-dimensional channel flow.
+
+    ## Description
+    An environment to showcase the modularity of Gym-preCICE adapter to couple a controller to a multi-solver physics-simulation-engine (more than one PDE solver
+    from different simulation software packages).
+    We control centre position of an inflow jet to manipulate the motion of a wall-mounted elastic flap in a two-dimensional channel flow.
+    The goal is to keep the elastic flap oscillating within the channel flow.
+    This physics-simulation-engine used for this environment is a fluid-structure interaction model adapted
+    from ["preCICE tutorials"](https://github.com/precice/tutorials/tree/master/perpendicular-flap).
+
+    ## Action Space
+    The action is a `ndarray` with shape `(1,)` with the value corresponding to the centre position of the inflow jet.
+    **Note**: Each control action (centre position of the inflow jet) is repeated over `self.action_interval` simulation time steps.
+
+    ## Observation Space
+    The observation is a `ndarray` with shape `(33, 2)` with the values corresponding to 2D force vectors acting on the elastic flap.
+
+    ## Rewards
+    Since we do not use this environment to train a DRL agent, we do not need to define a reward signal.
+
+    ## Episode End
+    The episode ends after 50 seconds of fluid-structure interaction simulation.
+
+    Args:
+        Adapter: gymprecice adapter super-class
+    """
+
+    def __init__(self, options: dict = None, idx: int = 0) -> None:
+        """Environment constructor.
+
+        Args:
+            options: a dictionary containing the information within gymprecice-config.json. It is a return of `gymprecice.utils.fileutils.make_result_dir` method called within the controller algorithm.
+            idx: environment index.
+        """
         super().__init__(options, idx)
         self._inlet_height = 4
         self._inlet_max_velocity = 10
         self._Q_ref = 2.0 / 3.0 * self._inlet_max_velocity * self._inlet_height
 
-        self._jet_width = self._inlet_height / 2.0
-        self._jet_max_velocity = self._inlet_height / self._jet_width * self._inlet_max_velocity
-        
-        
-        self._n_probes= 33  # number of flap-patch faces
+        self._jet_height = self._inlet_height / 2.0
+        self._jet_max_velocity = (
+            self._inlet_height / self._jet_height * self._inlet_max_velocity
+        )
+
+        self._n_probes = 33  # number of flap-patch faces
         self.action_interval = 10
         self.reward_average_time_window = 0.1
 
         self.action_space = gym.spaces.Box(
-            low=self._jet_width/2.0, high=self._inlet_height-self._jet_width/2.0, shape=(1,), dtype=np.float32
+            low=self._jet_height / 2.0,
+            high=self._inlet_height - self._jet_height / 2.0,
+            shape=(1,),
+            dtype=np.float32,
         )
         self.observation_space = gym.spaces.Box(
-            low=-np.inf, high=np.inf, shape=(self._n_probes,2), dtype=np.float32
+            low=-np.inf, high=np.inf, shape=(self._n_probes, 2), dtype=np.float32
         )
 
         self._reward_info = {
@@ -101,32 +140,43 @@ class PerpendicularFlapEnv(Adapter):
 
     @property
     def inlet_max_velocity(self):
+        """Get the maximum velocity of the inlet jet."""
         return self._inlet_max_velocity
 
     @inlet_max_velocity.setter
     def inlet_max_velocity(self, value):
+        """Set the maximum velocity of the inlet jet."""
         self._inlet_max_velocity = value
         self._Q_ref = 2.0 / 3.0 * value * self._inlet_height
-        self._jet_max_velocity = self._inlet_height / self._jet_width * value
-    
-    @property
-    def jet_width(self):
-        return self._jet_width
+        self._jet_max_velocity = self._inlet_height / self._jet_height * value
 
-    @jet_width.setter
-    def jet_width(self, value):
-        self._jet_width = value
-        self._jet_max_velocity = self._inlet_height / value * self._inlet_max_velocity 
+    @property
+    def jet_height(self):
+        """Get the height of the inlet jet."""
+        return self._jet_height
+
+    @jet_height.setter
+    def jet_height(self, value):
+        """Set the height of the inlet jet."""
+        self._jet_height = value
+        self._jet_max_velocity = self._inlet_height / value * self._inlet_max_velocity
         self.action_space = gym.spaces.Box(
-            low=value/2, high=self._inlet_height-value/2, shape=(1,), dtype=np.float32
+            low=value / 2,
+            high=self._inlet_height - value / 2,
+            shape=(1,),
+            dtype=np.float32,
         )
 
     def step(self, action):
+        r"""Repeat the control action over `self.action_interval` simulation time steps."""
         return self._repeat_step(action)
 
     def _get_action(self, action, write_var_list):
         acuation_interface_field = self._action_to_patch_field(action)
-        write_data = {var: acuation_interface_field[var.rpartition('-')[-1]] for var in write_var_list}
+        write_data = {
+            var: acuation_interface_field[var.rpartition("-")[-1]]
+            for var in write_var_list
+        }
         return write_data
 
     def _get_observation(self, observation_interface_field, read_var_list):
@@ -145,12 +195,11 @@ class PerpendicularFlapEnv(Adapter):
                 self._reward_info["file_handler"].close()
                 self._reward_info["file_handler"] = None
         except Exception as err:
-            logger.error(f"Can't close probes/forces file")
+            logger.error("Can't close probes/forces file")
             raise err
 
     def _action_to_patch_field(self, action):
         jet_centre_position = action[0]
-        # velocity field of the inlet actuation patch
 
         # velocity field of the actuation patches
         U_profile = {}
@@ -160,7 +209,10 @@ class PerpendicularFlapEnv(Adapter):
 
             U_patch = []
             uf = []
-            inlet_bound = [jet_centre_position - self._jet_width / 2.0,  jet_centre_position + self._jet_width / 2.0]
+            inlet_bound = [
+                jet_centre_position - self._jet_height / 2.0,
+                jet_centre_position + self._jet_height / 2.0,
+            ]
             for c in Cf:
                 if c[1] < inlet_bound[0] or c[1] > inlet_bound[1]:
                     # inactive inlet
@@ -169,7 +221,19 @@ class PerpendicularFlapEnv(Adapter):
                 else:
                     # active parabolic inlet
                     y = c[1] - inlet_bound[0]
-                    U_patch.append(np.array([4 * self._jet_max_velocity * y * (self._jet_width - y) / (self._jet_width ** 2), 0.0, 0.0]))
+                    U_patch.append(
+                        np.array(
+                            [
+                                4
+                                * self._jet_max_velocity
+                                * y
+                                * (self._jet_height - y)
+                                / (self._jet_height**2),
+                                0.0,
+                                0.0,
+                            ]
+                        )
+                    )
                     uf.append(np.array([1.0, 0.0, 0.0]))
 
             Q_calc = -sum([u.dot(s) for u, s in zip(U_patch, Sf)])
@@ -183,12 +247,13 @@ class PerpendicularFlapEnv(Adapter):
             Q_final = -sum([u.dot(s) for u, s in zip(U_patch, Sf)])
 
             if np.isclose(Q_final, self._Q_ref):
-                U_profile[patch_name] = np.array([np.delete(item, 2) for item in U_patch])
+                U_profile[patch_name] = np.array(
+                    [np.delete(item, 2) for item in U_patch]
+                )
             else:
                 raise Exception("Not a synthetic jet: Q_jet1 + Q_jet2 is not zero")
 
         return U_profile
-
 
     def _displacement_to_reward(self):
         self._read_displacement_from_file()
@@ -216,7 +281,7 @@ class PerpendicularFlapEnv(Adapter):
                     for data_line in reversed_displacement_data
                 ]
             )
-        
+
         reward = np.sum(np.abs(np.diff(tip_displacement)))
         return reward
 
