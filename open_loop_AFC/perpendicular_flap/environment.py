@@ -1,4 +1,11 @@
-"""AFC environment for perpendicular-flap control."""
+"""AFC environment for perpendicular-flap control.
+
+The physics-simulation-engine used for this environment is a fluid-structure interaction model adapted
+from ["preCICE tutorials"](https://github.com/precice/tutorials/tree/master/perpendicular-flap) under the following licence:
+
+[GNU LESSER GENERAL PUBLIC LICENSE](https://github.com/precice/tutorials/blob/master/LICENSE)
+"""
+
 import logging
 import math
 from os.path import join
@@ -25,8 +32,6 @@ class PerpendicularFlapEnv(Adapter):
     from different simulation software packages).
     We control centre position of an inflow jet to manipulate the motion of a wall-mounted elastic flap in a two-dimensional channel flow.
     The goal is to keep the elastic flap oscillating within the channel flow.
-    This physics-simulation-engine used for this environment is a fluid-structure interaction model adapted
-    from ["preCICE tutorials"](https://github.com/precice/tutorials/tree/master/perpendicular-flap).
 
     ## Action Space
     The action is a `ndarray` with shape `(1,)` with the value corresponding to the centre position of the inflow jet.

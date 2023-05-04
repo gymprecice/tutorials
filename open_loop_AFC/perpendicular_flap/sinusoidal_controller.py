@@ -40,11 +40,8 @@ if __name__ == "__main__":
     _, _ = env.reset()
 
     print("\n...")
-    print("The control case is running!")
-    print(
-        "This task is expected to be completed in about 5 minutes on a system with two cores @ 2.10GHz."
-    )
-    print("...\n")
+    print("The sinusoidal control case is running!")
+    print("Please wait ...\n")
 
     # step through the environment and control it for one complete episode (8 seconds, 320 steps)
     while not terminated:

@@ -1,6 +1,33 @@
+"""
+This code is adapted from [cleanrl](https://github.com/vwxyzjn/cleanrl) released under the following licence:
+
+MIT License
+
+Copyright (c) 2019 CleanRL developers
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 import argparse
 import logging
 import math
+import random
 import time
 from distutils.util import strtobool
 from typing import Optional
@@ -154,9 +181,6 @@ class WandBRewardRecoder(gym.Wrapper):
                         "episode": self.episode_count,
                     }
                     self.wandb_context.log(metrics_dict, commit=True)
-                print(
-                    f"DEBUG print, episode: {self.episode_count}, rewards : {episode_return / episode_length}"
-                )
 
                 self.episode_count += 1
                 self.episode_returns[i] = 0
@@ -179,7 +203,9 @@ class WandBRewardRecoder(gym.Wrapper):
 def parse_args():
     # Training specific arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("--seed", type=int, default=1, help="seed of the experiment")
+    parser.add_argument(
+        "--seed", type=int, default=12345, help="seed of the experiment"
+    )
     parser.add_argument(
         "--torch-deterministic",
         type=lambda x: bool(strtobool(x)),
@@ -248,7 +274,7 @@ def parse_args():
     parser.add_argument(
         "--num-envs",
         type=int,
-        default=24,
+        default=2,
         help="the number of parallel game environments",
     )
     parser.add_argument(
@@ -363,6 +389,10 @@ if __name__ == "__main__":
         except ImportError as err:
             logger.error("wandb is not installed, run `pip install gymprecice[vis]`")
             raise err
+
+    # TRY NOT TO MODIFY: seeding
+    random.seed(args.seed)
+    np.random.seed(args.seed)
 
     def make_env(options, idx, wrappers=None):
         def _make_env():

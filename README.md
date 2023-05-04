@@ -43,16 +43,17 @@ To make sure you can successfully run the tutorials, you need to install some ex
 Please check out the [Quickstart](https://github.com/gymprecice/gymprecice-tutorials/blob/master/quickstart/quickstart.ipynb) to follow running a control case step by step.
 
 
-
 ## Citing Us
 
 If you use Gym-preCICE, please cite the following paper:
+
 ```
-@misc{,
-  Author = {Mosayeb Shams, Ahmed H. Elsheikh},
-  Title = {Gym-preCICE: Reinforcement Learning Environments for Active Flow Control},
-  Year = {2023},
-  Eprint = {arXiv:},
+@misc{shams2023gymprecice,
+      title={Gym-preCICE: Reinforcement Learning Environments for Active Flow Control},
+      author={Mosayeb Shams and Ahmed H. Elsheikh},
+      year={2023},
+      eprint={2305.02033},
+      archivePrefix={arXiv}
 }
 ```
 

@@ -1,3 +1,29 @@
+"""
+This code is adapted from [cleanrl](https://github.com/vwxyzjn/cleanrl) released under the following licence:
+
+MIT License
+
+Copyright (c) 2019 CleanRL developers
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 import argparse
 import logging
 import math
@@ -89,7 +115,6 @@ class Agent(nn.Module):
                 squashed_sample * self.action_scale + self.action_bias
             )  # we scale the sampled action
 
-        # TODO: this should be done only when action is not None
         squashed_action = (
             2.0 * (action - self.action_min) / (self.action_max - self.action_min) - 1.0
         )
@@ -99,7 +124,6 @@ class Agent(nn.Module):
         gaussian_action = torch.atanh(squashed_action)
 
         log_prob = probs.log_prob(gaussian_action)
-        # log_prob -= torch.log(self.action_scale * (1 - squashed_action.pow(2)) + EPSILON)
         log_prob -= 2.0 * (
             math.log(2.0)
             - gaussian_action
@@ -108,7 +132,6 @@ class Agent(nn.Module):
 
         entropy = probs.entropy().sum(1)
 
-        # agent returns the mean action for CAP method
         return action, mean, log_prob.sum(1), entropy, self.critic(x)
 
 
@@ -154,9 +177,6 @@ class WandBRewardRecoder(gym.Wrapper):
                         "episode": self.episode_count,
                     }
                     self.wandb_context.log(metrics_dict, commit=True)
-                print(
-                    f"DEBUG print, episode: {self.episode_count}, rewards : {episode_return / episode_length}"
-                )
 
                 self.episode_count += 1
                 self.episode_returns[i] = 0
@@ -249,7 +269,7 @@ def parse_args():
     parser.add_argument(
         "--num-envs",
         type=int,
-        default=24,
+        default=2,
         help="the number of parallel game environments",
     )
     parser.add_argument(
@@ -368,8 +388,6 @@ if __name__ == "__main__":
     # TRY NOT TO MODIFY: seeding
     random.seed(args.seed)
     np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
-    torch.backends.cudnn.deterministic = args.torch_deterministic
 
     def make_env(options, idx, wrappers=None):
         def _make_env():
