@@ -390,9 +390,11 @@ if __name__ == "__main__":
             logger.error("wandb is not installed, run `pip install gymprecice[vis]`")
             raise err
 
-    # TRY NOT TO MODIFY: seeding
+    # deterministic training
     random.seed(args.seed)
     np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    torch.backends.cudnn.deterministic = args.torch_deterministic
 
     def make_env(options, idx, wrappers=None):
         def _make_env():
