@@ -49,11 +49,15 @@ If you use Gym-preCICE, please cite the following paper:
 
 ```
 @misc{shams2023gymprecice,
-      title={Gym-preCICE: Reinforcement Learning Environments for Active Flow Control},
-      author={Mosayeb Shams and Ahmed H. Elsheikh},
-      year={2023},
-      eprint={2305.02033},
-      archivePrefix={arXiv}
+      title = {Gym-preCICE: Reinforcement learning environments for active flow control},
+      author = {Shams, Mosayeb and Elsheikh, Ahmed H},
+      journal = {SoftwareX},
+      volume = {23},
+      pages = {101446},
+      year = {2023},
+      issn = {2352-7110},
+      doi = {https://doi.org/10.1016/j.softx.2023.101446},
+      eprint = {https://arxiv.org/abs/2305.02033},
 }
 ```
 
