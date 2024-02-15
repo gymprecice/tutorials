@@ -36,12 +36,34 @@ To begin running the tutorial cases, it is necessary to have [gymprecice](https:
 
 To make sure you can successfully run the tutorials, you need to install some example-specific requirements:
 
-- The tutorials within `closed-loop` directory rely on `OpenFOAM` CFD solvers and `OpenFOAM-preCICE adapter`. Please follow the insructions [here](https://precice.org/adapter-openfoam-overview.html) to install these dependencies.
+- The tutorials within `closed-loop` directory rely on `OpenFOAM` CFD solvers and `OpenFOAM-preCICE adapter`. Please follow the instructions [here](https://precice.org/adapter-openfoam-overview.html) to install these dependencies.
 
-- The tutorials within `open-loop` directory, in addition to OpenFOAM CFD solvers and OpenFOAM-preCICE adapter, rely on `deal.II` solid solvers and `deal.II-preCICE adapter`. Please follow the insructions [here](https://precice.org/adapter-dealii-overview.html) to install these dependencies.
+- The tutorials within `open-loop` directory, in addition to OpenFOAM CFD solvers and OpenFOAM-preCICE adapter, rely on `deal.II` solid solvers and `deal.II-preCICE adapter`. Please follow the instructions [here](https://precice.org/adapter-dealii-overview.html) to install these dependencies.
 
 Please check out the [Quickstart](https://github.com/gymprecice/gymprecice-tutorials/blob/master/quickstart/quickstart.ipynb) to follow running a control case step by step.
 
+## Further instructions
+The tutorials and [gymprecice](https://github.com/gymprecice/gymprecice) were tested on specific version of `preCICE`, `OpenFOAM` and `OpenFOAM-preCICE adapter` on Ubuntu 20.04.6 LTS
+
+- `preCICE` was installed using
+```
+wget https://github.com/precice/precice/releases/download/v2.5.0/libprecice2_2.5.0_focal.deb
+sudo apt install ./libprecice2_2.5.0_focal.deb
+```
+- `OpenFOAM` was installed using
+```
+curl https://dl.openfoam.com/add-debian-repo.sh | sudo bash
+sudo apt-get install openfoam2112-default
+``` 
+followed by adding `source /usr/lib/openfoam/openfoam2112/etc/bashrc` to the `.bashrc` file or `.zshrc`
+- `OpenFOAM-preCICE adapter` was installed locally (without sudo) using
+```
+wget https://github.com/precice/openfoam-adapter/releases/download/v1.1.0/openfoam-adapter_v1.1.0_OpenFOAMv1812-v2112-newer.tar.gz
+tar -xzvf openfoam-adapter_v1.1.0_OpenFOAMv1812-v2112-newer.tar.gz
+cd openfoam-adapter_v1.1.0_OpenFOAMv1812-v2112-newer
+./Allwmake
+cd ..
+```
 
 ## Citing Us
 
@@ -49,15 +71,15 @@ If you use Gym-preCICE, please cite the following paper:
 
 ```
 @misc{shams2023gymprecice,
-      title = {Gym-preCICE: Reinforcement learning environments for active flow control},
-      author = {Shams, Mosayeb and Elsheikh, Ahmed H},
-      journal = {SoftwareX},
-      volume = {23},
-      pages = {101446},
-      year = {2023},
-      issn = {2352-7110},
-      doi = {https://doi.org/10.1016/j.softx.2023.101446},
-      eprint = {https://arxiv.org/abs/2305.02033},
+      title={Gym-preCICE: Reinforcement learning environments for active flow control},
+      author={Shams, Mosayeb and Elsheikh, Ahmed H},
+      journal={SoftwareX},
+      volume={23},
+      pages={101446},
+      year={2023},
+      issn={2352-7110},
+      doi={https://doi.org/10.1016/j.softx.2023.101446},
+      eprint={https://arxiv.org/abs/2305.02033},
 }
 ```
 
@@ -77,7 +99,7 @@ Gym-preCICE and its tutorials are primarily developed and maintained by:
 
 ## Acknowledgements
 
-This work was supported by the Engineering and Physical Sciences Research Council grant number EP/V048899/1.
+This work was supported by the Engineering and Physical Sciences Research Council grants number EP/V048899/1 and EP/Y006143/1.
 
 
 ## License
