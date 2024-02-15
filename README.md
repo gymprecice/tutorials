@@ -54,7 +54,7 @@ sudo apt install ./libprecice2_2.5.0_focal.deb
 ```
 curl https://dl.openfoam.com/add-debian-repo.sh | sudo bash
 sudo apt-get install openfoam2112-default
-``` 
+```
 followed by adding `source /usr/lib/openfoam/openfoam2112/etc/bashrc` to the `.bashrc` file or `.zshrc`
 - `OpenFOAM-preCICE adapter` was installed locally (without sudo) using
 ```
