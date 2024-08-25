@@ -240,6 +240,10 @@ class RotatingCylinder2DEnv(Adapter):
         r"""Distribute the control action smoothly and linearly over `self.action_interval` simulation time steps."""
         return self._smooth_step(action)
 
+    def reset(self, seed=None, options=None):
+        self._prerun_data_required = self._latest_available_sim_time > 0.0
+        return super().reset(seed=seed, options=options)
+
     def _get_action(self, action, write_var_list):
         acuation_interface_field = self._action_to_patch_field(action)
         write_data = {
